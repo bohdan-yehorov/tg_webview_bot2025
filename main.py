@@ -15,28 +15,35 @@ if not BOT_TOKEN:
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(bot)
 
-# переклади
+# переклади для EN / FR / RU
 MESSAGES = {
     "en": {
+        "cta_title": "🎁 Your special bonus is ready!",
         "cta_button": "Open Bonus",
     },
     "fr": {
+        "cta_title": "🎁 Votre bonus spécial est prêt !",
         "cta_button": "Ouvrir le bonus",
     },
-    "uk": {
-        "cta_button": "Відкрити бонус",
-    },
     "ru": {
+        "cta_title": "🎁 Ваш специальный бонус готов!",
         "cta_button": "Открыть бонус",
     },
 }
 
 def tr(key: str, lang: str):
-    return MESSAGES.get(lang, MESSAGES["en"]).get(key, key)
+    lang = (lang or "en").split("-")[0]
+    if lang not in ("en", "fr", "ru"):
+        lang = "en"
+    return MESSAGES[lang][key]
 
 @dp.message_handler(commands=["start", "help"])
 async def start_cmd(message: types.Message):
     lang = (message.from_user.language_code or "en").split("-")[0]
+    if lang not in ("en", "fr", "ru"):
+        lang = "en"
+
+    text = tr("cta_title", lang)
 
     kb = InlineKeyboardMarkup()
     kb.add(
@@ -46,7 +53,7 @@ async def start_cmd(message: types.Message):
         )
     )
 
-    await message.answer(tr("cta_button", lang), reply_markup=kb)
+    await message.answer(text, reply_markup=kb)
 
 if __name__ == "__main__":
     executor.start_polling(dp, skip_updates=True)
