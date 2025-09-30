@@ -1,6 +1,7 @@
 import os
 import logging
 from aiogram import Bot, Dispatcher, types
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 from aiogram.utils import executor
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
@@ -14,37 +15,38 @@ if not BOT_TOKEN:
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(bot)
 
-translations = {
-    "welcome": {
-        "ru": "👋 Добро пожаловать! Нажмите START, чтобы получить бонус.",
-        "en": "👋 Welcome! Tap START to claim your bonus.",
-        "fr": "👋 Bienvenue ! Appuyez sur START pour réclamer votre bonus."
+# переклади
+MESSAGES = {
+    "en": {
+        "cta_button": "Open Bonus",
     },
-    "cta_title": {
-        "ru": "🎁 Ваш специальный бонус готов!",
-        "en": "🎁 Your special bonus is ready!",
-        "fr": "🎁 Votre bonus spécial est prêt !"
+    "fr": {
+        "cta_button": "Ouvrir le bonus",
     },
-    "cta_button": {
-        "ru": "Получить сейчас",
-        "en": "Claim now",
-        "fr": "Obtenez-le maintenant"
-    }
+    "uk": {
+        "cta_button": "Відкрити бонус",
+    },
+    "ru": {
+        "cta_button": "Открыть бонус",
+    },
 }
 
-def tr(key, lang):
-    lang = (lang or "en").split("-")[0]
-    if lang not in ("ru", "en", "fr"):
-        lang = "en"
-    return translations.get(key, {}).get(lang, translations[key]["en"])
+def tr(key: str, lang: str):
+    return MESSAGES.get(lang, MESSAGES["en"]).get(key, key)
 
 @dp.message_handler(commands=["start", "help"])
-async def start(message: types.Message):
-    lang = message.from_user.language_code or "en"
-    text = tr("welcome", lang) + "\n\n" + tr("cta_title", lang)
-    keyboard = types.InlineKeyboardMarkup()
-    keyboard.add(types.InlineKeyboardButton(tr("cta_button", lang), url=WEBVIEW_URL))
-    await message.answer(text, reply_markup=keyboard)
+async def start_cmd(message: types.Message):
+    lang = (message.from_user.language_code or "en").split("-")[0]
+
+    kb = InlineKeyboardMarkup()
+    kb.add(
+        InlineKeyboardButton(
+            text=tr("cta_button", lang),
+            web_app=WebAppInfo(url=WEBVIEW_URL)
+        )
+    )
+
+    await message.answer(tr("cta_button", lang), reply_markup=kb)
 
 if __name__ == "__main__":
     executor.start_polling(dp, skip_updates=True)
